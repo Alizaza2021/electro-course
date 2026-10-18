@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="uk"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Електричний конструктор | Курс домашньої електрики</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f3f1ec;--fg:#1d2227;--mut:#5d666e;--card:#fff;--line:#d5d2ca;--acc:#c8501e;--ok:#1f7a45;--bad:#b3261e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1f23;--fg:#ecebe6;--mut:#a3abb2;--card:#262b30;--line:#3a4148;--acc:#f08a5d;--ok:#59c98a;--bad:#ff8a80}}
+:root[data-theme="dark"]{--bg:#1b1f23;--fg:#ecebe6;--mut:#a3abb2;--card:#262b30;--line:#3a4148;--acc:#f08a5d;--ok:#59c98a;--bad:#ff8a80}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:0 0 2px}
+.sub{color:var(--mut);margin:0 0 14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+button.done::after{content:" ✓";color:var(--ok)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0}
+.card b{display:block;margin-bottom:2px}
+[hidden]{display:none!important}
+.sw{width:30px;height:30px;padding:0;border-radius:50%;border:3px solid transparent}
+.sw.sel{border-color:var(--fg)}
+.board{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#e9e7e1;touch-action:none}
+svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+#msg{min-height:48px}
+#msg ul{margin:4px 0 0;padding-left:20px}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+small{color:var(--mut)}
+</style></head><body><main>
+<p><a href="index.html">← До курсу</a></p><h1>Електричний конструктор</h1>
+<p class="sub">Тренажер для новачків. Нормативна база: Україна (кольори дротів за ДСТУ IEC 60446).</p>
+<div class="row" id="lvls"></div>
+<div class="card"><b id="ttl"></b><span id="task"></span><br><small id="hint"></small></div>
+<div class="row"><span>Додати на поле:</span>
+<button data-add="breaker">Автомат</button><button data-add="lamp">Лампа</button><button data-add="switch">Вимикач</button><button data-add="socket">Розетка</button><button data-add="2">Ваго 2</button><button data-add="3">Ваго 3</button><button data-add="5">Ваго 5</button><button data-add="box">Коробка</button></div>
+<small>Дроти тягнуться від клеми до клеми, колір обирається нижче. Видалити елемент: виберіть його і натисніть «Видалити вибране» (або двічі клацніть). Автомат вмикається клацанням по його важелю, номінал міняється після вибору автомата.</small>
+<div class="row"><span>Колір дроту:</span><span id="cols" class="row" style="margin:0"></span><small id="cname"></small><label>Переріз: <select id="sec"><option value="0.75">0.75 мм²</option><option value="1">1 мм²</option><option value="1.5" selected>1.5 мм²</option><option value="2.5">2.5 мм²</option><option value="4">4 мм²</option><option value="6">6 мм²</option><option value="10">10 мм²</option></select></label></div>
+<div class="row"><label>Номінал вибраного автомата: <select id="amp" disabled><option value="6">C6 (6 А)</option><option value="10">C10 (10 А)</option><option value="16">C16 (16 А)</option><option value="20">C20 (20 А)</option><option value="25">C25 (25 А)</option><option value="32">C32 (32 А)</option><option value="40">C40 (40 А)</option><option value="50">C50 (50 А)</option></select></label><label>Тип вибраного вимикача: <select id="kind" disabled><option value="single">Одноклавішний</option><option value="double">Двоклавішний</option><option value="pass">Прохідний</option><option value="cross">Перехресний</option></select></label></div>
+<div class="card" id="auth" hidden><b>Режим автора.</b> Розташуйте елементи на полі, заповніть поля й натисніть «Створити JSON». Результат вставте в levels.json (дивіться README).<br>
+<input id="aid" placeholder="номер"> <input id="an" placeholder="назва рівня" size="30"> <label><input type="checkbox" id="asw"> потрібен вимикач для лампи</label><br>
+<textarea id="at" placeholder="завдання для учня" rows="2" style="width:100%"></textarea><textarea id="ah" placeholder="підказка" rows="2" style="width:100%"></textarea>
+<button id="anew">Новий рівень</button> <button id="agen">Створити JSON</button><textarea id="aout" rows="6" style="width:100%" readonly></textarea></div>
+<div class="board"><svg id="svg" viewBox="0 0 900 520" role="img" aria-label="Робоче поле конструктора"></svg></div>
+<div class="row"><button id="chk">Перевірити схему</button><button id="pwr">Увімкнути всі автомати</button><button id="del">Видалити вибране</button><button id="clr">Прибрати всі дроти</button></div>
+<div class="card" id="msg" aria-live="polite">Протягніть дріт від клеми до клеми. Клацніть по дроту, щоб його видалити. </div>
+</main>
+<script>
+const svg=document.getElementById('svg'),$=id=>document.getElementById(id);
+const COL={brown:['#7a4a22','коричневий'],black:['#1c1c1c','чорний'],grey:['#8a8f94','сірий'],blue:['#2f6fe0','синій'],yg:['#d9c200','жовто-зелений']};
+const DEF={panel:{w:300,h:270,t:[0,1,2,3,4].flatMap(k=>[['L'+k,42+50*k,22,''],['N'+k,42+50*k,205,''],['PE'+k,42+50*k,248,'']])},
+breaker:{w:44,h:100,t:[['in',22,0,''],['out',22,100,'']]},
+lamp:{w:72,h:100,t:[['L',22,100,'L'],['N',50,100,'N']]},
+switch:{w:70,h:70,t:[['in',20,70,'вх'],['out',50,70,'вих']]},
+socket:{w:76,h:76,t:[['L',14,0,'L'],['PE',38,0,'PE'],['N',62,0,'N']]},
+box:{w:240,h:170,t:[]}};
+let section=1.5,sel=null,last={id:null,t:0},cnt=0,lvl=0,els=[],wires=[],powered=false,color='brown',drag=null,tmp=null,done={};
+const mk=(type,x,y,id,n)=>({id:id||type+(++cnt),type,x,y,on:false,fixed:type==='panel',n,amp:16});
+let LV=[];
+const SWT={single:DEF.switch.t,double:[['o1',15,70,'1'],['in',45,70,'вх'],['o2',75,70,'2']],pass:[['a',15,70,'1'],['c',45,70,'С'],['b',75,70,'2']],cross:[['a1',12,70,'1'],['a2',34,70,'2'],['b1',56,70,'3'],['b2',78,70,'4']]};
+function terms(e){if(e.type==='switch')return SWT[e.kind||'single'];if(e.type==='wago'){return Array.from({length:e.n},(_,i)=>[''+i,15+22*i,17,''])}return DEF[e.type]?DEF[e.type].t:[]}
+const W=e=>e.type==='wago'?22*e.n+8:e.type==='switch'&&e.kind&&e.kind!=='single'?90:DEF[e.type].w,H=e=>e.type==='wago'?34:DEF[e.type].h;
+const tid=(e,t)=>e.id+'.'+t[0];
+function allT(){const r=[];els.forEach(e=>terms(e).forEach(t=>r.push({id:tid(e,t),x:e.x+t[1],y:e.y+t[2],lbl:t[3],e,t})));return r}
+function wc(id){return wires.filter(w=>w.a===id||w.b===id).length}
+function swU(e,sw,u){const q=t=>e.id+'.'+t,k=e.kind||'single',a=sw(e,1);
+if(k==='single'){if(a)u(q('in'),q('out'))}else if(k==='double'){if(a)u(q('in'),q('o1'));if(sw(e,2))u(q('in'),q('o2'))}
+else if(k==='pass')u(q('c'),q(a?'a':'b'));else if(a){u(q('a1'),q('b1'));u(q('a2'),q('b2'))}else{u(q('a1'),q('b2'));u(q('a2'),q('b1'))}}
+const SW=(e,k)=>k===2?e.on2:e.on;
+function nets(sw,br=()=>true){const p={};const f=x=>p[x]===undefined||p[x]===x?(p[x]=x):(p[x]=f(p[x]));const u=(a,b)=>{p[f(a)]=f(b)};
+allT().forEach(t=>f(t.id));wires.forEach(w=>u(w.a,w.b));
+els.forEach(e=>{if(e.type==='panel')['L','N','PE'].forEach(k=>{for(let i=1;i<5;i++)u('p.'+k+i,'p.'+k+'0')});if(e.type==='breaker'&&br(e))u(e.id+'.in',e.id+'.out');if(e.type==='wago'){const ts=terms(e);ts.forEach(t=>u(tid(e,ts[0]),tid(e,t)))}if(e.type==='switch')swU(e,sw,u)});return f}
+function body(e){const lit=powered&&isLit(e),live=powered&&isLive(e);switch(e.type){
+case'panel':{let r=`<rect width="300" height="270" rx="8" fill="#5b636b"/><rect x="8" y="8" width="284" height="254" rx="5" fill="#8d959c"/><rect x="10" y="104" width="280" height="8" fill="#6b737a"/><rect x="14" y="12" width="272" height="20" rx="4" fill="#7a4a22"/><text x="18" y="46" font-size="9" fill="#fff">шина L (фаза)</text><rect x="14" y="195" width="272" height="20" rx="4" fill="#3b78d8"/><text x="18" y="191" font-size="9" fill="#fff">шина N (нуль)</text><rect x="14" y="238" width="272" height="20" rx="4" fill="#c9b800"/><rect x="14" y="246" width="272" height="4" fill="#2e9d3f"/><text x="18" y="234" font-size="9" fill="#fff">шина PE (земля)</text>`;return r}
+case'breaker':return`<rect width="44" height="100" rx="4" fill="#f2f2ee" stroke="#999" stroke-width="1.5"/><rect x="12" y="${e.on?12:44}" width="20" height="30" rx="3" fill="${e.tripped?'#c0261e':'#2b2f33'}"/><rect data-brk="${e.id}" x="6" y="8" width="32" height="68" fill="transparent" style="cursor:pointer"/><text x="22" y="92" font-size="11" font-weight="700" text-anchor="middle" fill="#333">C${e.amp}</text>`;
+case'lamp':return`<circle cx="36" cy="36" r="${lit?46:30}" fill="#ffd84a" opacity="${lit?.45:0}"/><circle cx="36" cy="36" r="28" fill="${lit?'#fff3a8':'#e8ecef'}" stroke="#777" stroke-width="2"/><path d="M26 36q10-16 20 0" fill="none" stroke="${lit?'#e28a00':'#999'}" stroke-width="2"/><rect x="22" y="62" width="28" height="22" rx="3" fill="#9a9fa4"/>`;
+case'switch':{const k=e.kind||'single',w=k==='single'?70:90,kw=k==='single'?36:30,key=(x,on)=>`<rect x="${x}" y="10" width="${kw}" height="34" rx="4" fill="#eceae4" stroke="#bbb"/><rect x="${x}" y="${on?10:26}" width="${kw}" height="18" rx="3" fill="${on?'#c8501e':'#cfcdc6'}"/>`;
+return`<rect width="${w}" height="70" rx="8" fill="#fafaf7" stroke="#aaa" stroke-width="2"/>`+(k==='single'?key(17,e.on):k==='double'?key(10,e.on)+key(50,e.on2):key(30,e.on))+(k==='pass'?'<text x="45" y="60" font-size="8" fill="#888" text-anchor="middle">прохідний</text>':k==='cross'?'<text x="45" y="60" font-size="8" fill="#888" text-anchor="middle">перехресний</text>':'')}
+case'socket':return`${live?'<circle cx="38" cy="42" r="46" fill="#3ddc84" opacity=".35"/>':''}<rect width="76" height="76" rx="8" fill="#fafaf7" stroke="${live?'#1fbf6a':'#aaa'}" stroke-width="${live?3:2}"/><circle cx="38" cy="42" r="22" fill="#f0eee8" stroke="#bbb"/><circle cx="30" cy="42" r="3.5" fill="${live?'#1fbf6a':'#333'}"/><circle cx="46" cy="42" r="3.5" fill="${live?'#1fbf6a':'#333'}"/><rect x="3" y="38" width="5" height="10" fill="#9aa"/><rect x="68" y="38" width="5" height="10" fill="#9aa"/>${live?'<rect x="14" y="80" width="48" height="16" rx="8" fill="#1fbf6a"/><text x="38" y="92" font-size="11" font-weight="700" text-anchor="middle" fill="#fff">⚡ 230 В</text>':''}`;
+case'wago':{let s=`<rect width="${W(e)}" height="34" rx="5" fill="#e9eef0" stroke="#8a949a" stroke-width="1.5" opacity=".95"/>`;for(let i=0;i<e.n;i++)s+=`<rect x="${6+22*i}" y="2" width="18" height="7" rx="2" fill="#f08a1c"/><rect x="${6+22*i}" y="12" width="18" height="10" rx="2" fill="#c9d1d6"/>`;return s}
+case'box':return`<rect width="240" height="170" rx="10" fill="#d9d6cd" stroke="#8a867b" stroke-width="3" stroke-dasharray="1 0"/><text x="12" y="20" font-size="11" fill="#6b675d">Розподільча коробка</text>`}}
+function wireSvg(a,b,c,w,i,sc){const d=`M${a.x},${a.y} Q${(a.x+b.x)/2},${Math.max(a.y,b.y)+45} ${b.x},${b.y}`,t=3+Math.sqrt(sc||1.5)*1.2,mx=(a.x+b.x)/2,my=.25*a.y+.25*b.y+.5*(Math.max(a.y,b.y)+45);
+let s=`<path d="${d}" fill="none" stroke="#0005" stroke-width="${t+3}" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${COL[c][0]}" stroke-width="${t}" stroke-linecap="round"/>`;
+if(c==='yg')s+=`<path d="${d}" fill="none" stroke="#2e9d3f" stroke-width="${t}" stroke-dasharray="9 9"/>`;
+if(w!==undefined)s+=`<text x="${mx}" y="${my+3}" font-size="10" font-weight="600" text-anchor="middle" fill="#222" stroke="#fff" stroke-width="3" paint-order="stroke" pointer-events="none">${sc||1.5}</text><path d="${d}" data-w="${i}" fill="none" stroke="transparent" stroke-width="16" style="cursor:pointer"/>`;return s}
+function render(){tripCheck();const T=allT(),pos={};T.forEach(t=>pos[t.id]=t);
+const sorted=[...els.filter(e=>e.type==='box'),...els.filter(e=>e.type!=='box')];
+let s=sorted.map(e=>`<g data-e="${e.id}" transform="translate(${e.x},${e.y})" style="cursor:${e.type==='switch'&&powered?'pointer':'grab'}">${body(e)}${e.id===sel?`<rect x="-4" y="-4" width="${W(e)+8}" height="${H(e)+8}" rx="6" fill="none" stroke="#c8501e" stroke-width="2" stroke-dasharray="5 4" pointer-events="none"/>`:''}</g>`).join('');
+s+=wires.map((w,i)=>wireSvg(pos[w.a],pos[w.b],w.c,1,i,w.s)).join('');
+if(tmp)s+=`<path d="M${tmp.x1},${tmp.y1} L${tmp.x2},${tmp.y2}" stroke="${COL[color][0]}" stroke-width="4" stroke-dasharray="6 5" fill="none" pointer-events="none"/>`;
+s+=T.map(t=>{const used=wc(t.id)>0,side=false;
+return`<circle data-t="${t.id}" cx="${t.x}" cy="${t.y}" r="${t.e.type==='wago'?6:8}" fill="${used?'#444':'#fff'}" stroke="#333" stroke-width="2" style="cursor:crosshair"/>`+(t.lbl?`<text x="${side?t.x+13:t.x}" y="${t.e.type==='socket'?t.y-12:t.y+21}" font-size="11" font-weight="600" fill="#333" text-anchor="${side?'start':'middle'}" pointer-events="none">${t.lbl}</text>`:'')}).join('');
+svg.innerHTML=s}
+function ns(){return nets(SW,e=>e.on)}
+function isLit(l){if(l.type!=='lamp')return false;const n=ns();return n(l.id+'.L')===n('p.L0')&&n(l.id+'.N')===n('p.N0')}
+function isLive(l){if(l.type!=='socket')return false;const n=ns();return n(l.id+'.L')===n('p.L0')&&n(l.id+'.N')===n('p.N0')}
+function shorted(n){return n('p.L0')===n('p.N0')||n('p.L0')===n('p.PE0')||n('p.N0')===n('p.PE0')}
+function tripCheck(){const hit=els.filter(b=>b.type==='breaker'&&b.on&&shorted(nets(SW,e=>e===b)));hit.forEach(b=>{b.on=false;b.tripped=true});powered=els.some(b=>b.type==='breaker'&&b.on);syncBtn();syncSel();
+if(hit.length)say(`<b class="bad">Спрацював автомат: коротке замикання.</b> ${hit.map(lab).join(', ')}: важіль опустився. Знайдіть помилку в схемі й увімкніть автомат знову.`)}
+function say(h){$('msg').innerHTML=h}
+function lab(e){const nm={lamp:'Лампа',switch:'Вимикач',socket:'Розетка',breaker:'Автомат'}[e.type],l=els.filter(x=>x.type===e.type);return l.length>1?`${nm} №${l.indexOf(e)+1}`:nm}
+const TN={in:'вхід',out:'вихід'};
+function check(){const E=[],A=[],c=nets(()=>true),L='p.L0',N='p.N0',PE='p.PE0',nsw=LV[lvl].sw;let dev=0;
+const BITS=[];els.filter(e=>e.type==='switch').forEach(e=>{BITS.push([e,1]);if(e.kind==='double')BITS.push([e,2])});
+const M=1<<Math.min(BITS.length,8),st=m=>(e,k)=>{const i=BITS.findIndex(b=>b[0]===e&&b[1]===k);return i>=0&&!!(m>>i&1)};
+const NS=[],NBS=[];for(let m=0;m<M;m++){NS.push(nets(st(m)));NBS.push(nets(st(m),()=>false))}
+els.forEach(e=>{if(['panel','box','wago'].includes(e.type))return;if(e.type!=='breaker')dev++;const nm=lab(e),q=t=>e.id+'.'+t;
+terms(e).forEach(t=>{if(e.type==='switch'&&e.kind==='double'&&t[0][0]==='o')return;if(!wc(tid(e,t)))E.push(`${nm}: клема «${TN[t[0]]||t[3]}» не підключена.`)});
+if(e.type==='switch'&&e.kind==='double'&&!wc(q('o1'))&&!wc(q('o2')))E.push(`${nm}: не підключено жодного виходу.`);
+if(e.type==='breaker'&&c(q('in'))!==c(L))E.push(`${nm}: вхід не підключений до шини L.`);
+if(e.type==='lamp'){const on=NS.map(n=>n(q('L'))===n(L));if(c(q('N'))!==c(N))E.push(`${nm}: немає нуля.`);
+if(!on.some(Boolean))E.push(`${nm}: не приходить фаза.`);
+else{if(nsw&&on.every(Boolean))E.push(`${nm}: фаза йде напряму, вимикач її не розриває.`);
+BITS.forEach((b,i)=>{if(i>=8)return;const d=on.map((v,m)=>v!==on[m^(1<<i)]);if(d.some(Boolean)&&!d.every(Boolean))E.push(`${lab(b[0])}: не завжди перемикає ${nm}. Перевірте з’єднання.`)})}}
+if(e.type==='switch'&&terms(e).some(t=>NS.some(n=>n(q(t[0]))===n(N))))E.push(`${nm}: підключений у коло нуля. Комутувати треба фазу.`);
+if(e.type==='socket'){const ph=NS.map(n=>n(q('L'))===n(L));if(!ph.some(Boolean))E.push(`${nm}: немає фази.`);else if(!ph.every(Boolean))E.push(`${nm}: живиться через вимикач, її треба підключати напряму.`);
+if(c(q('N'))!==c(N))E.push(`${nm}: немає нуля.`);if(c(q('PE'))!==c(PE))E.push(`${nm}: немає заземлення (PE).`)}});
+if(!dev)E.push('Додайте на поле лампи, вимикачі чи розетки.');
+if(!els.some(b=>b.type==='breaker'))E.push('Додайте автомат і підключіть його до шини L.');
+if(NS.some(n=>n(L)===n(N)))E.push('Коротке замикання: фаза з’єднана з нулем (можливо, лише в одному положенні вимикачів).');
+if(NS.some(n=>n(L)===n(PE)))E.push('Фаза з’єднана із заземленням, це небезпечно.');
+if(NS.some(n=>n(N)===n(PE)))E.push('Нуль з’єднаний із заземленням у групі, так робити не можна.');
+const bad={};wires.forEach(w=>{const iL=NS.some(n=>n(w.a)===n(L)),iN=NS.some(n=>n(w.a)===n(N)),iP=NS.some(n=>n(w.a)===n(PE));if(iL+iN+iP!==1)return;
+const ok=iL?['brown','black','grey']:iN?['blue']:['yg'];
+if(!ok.includes(w.c)){const k=iL?'фазі (коричневий, чорний або сірий)':iN?'нулю (синій)':'заземленню (жовто-зелений)';bad[k]=(bad[k]||0)+1}});
+Object.entries(bad).forEach(([k,v])=>E.push(`Колір дроту не відповідає ${k}: ${v} шт.`));
+const MAX={0.75:6,1:10,1.5:10,2.5:16,4:25,6:32,10:50};
+els.filter(b=>b.type==='breaker').forEach(b=>{const on=x=>NBS.some(n=>n(x)===n(b.id+'.out')),ss=els.filter(x=>x.type==='socket'&&on(x.id+'.L')).length,ls=els.filter(x=>x.type==='lamp'&&on(x.id+'.L')).length;
+if(ss&&b.amp<16)A.push(`${lab(b)} (${b.amp} А): розеткові групи зазвичай захищають автоматом 16 А.`);
+if(ls&&!ss&&b.amp>10)A.push(`${lab(b)} (${b.amp} А): групи освітлення зазвичай захищають автоматом 6–10 А.`);
+wires.forEach(w=>{if(!w.fixed&&on(w.a)&&b.amp>MAX[w.s])E.push(`${lab(b)} C${b.amp}: дріт ${w.s} мм² замалий, для нього автомат має бути не більше ${MAX[w.s]} А.`)})});
+if(E.length){say('<b class="bad">Знайдено помилки:</b><ul>'+[...new Set(E)].map(x=>`<li>${x}</li>`).join('')+'</ul>')}
+else{done[lvl]=1;try{const d=JSON.parse(localStorage.getItem('ec_levels')||'{}');d[LV[lvl].id]=1;localStorage.setItem('ec_levels',JSON.stringify(d))}catch(_){}say('<b class="ok">Схема правильна.</b> Увімкніть автомат і перевірте її в роботі.'+(A.length?'<br><b>Порада щодо номіналів:</b><ul>'+A.map(x=>`<li>${x}</li>`).join('')+'</ul>':''));renderLvls()}}
+function syncBtn(){$('pwr').textContent=powered?'Вимкнути всі автомати':'Увімкнути всі автомати';$('pwr').classList.toggle('on',powered)}
+function setPower(){const on=!els.some(b=>b.type==='breaker'&&b.on);els.forEach(b=>{if(b.type==='breaker'){b.on=on;b.tripped=false}});say(on?'Автомати увімкнено. Клацайте по вимикачах.':'Автомати вимкнено. Можна редагувати схему.');render()}
+function syncSel(){const el=els.find(x=>x.id===sel),a=$('amp'),ok=!!el&&el.type==='breaker',k=$('kind'),sk=!!el&&el.type==='switch';a.disabled=!ok;if(ok)a.value=el.amp;k.disabled=!sk;if(sk)k.value=el.kind||'single'}
+function addBreaker(){const P=els.find(e=>e.type==='panel'),k=els.filter(e=>e.type==='breaker').length;els.push(k<5?mk('breaker',P.x+20+50*k,P.y+60):mk('breaker',520,330))}
+function delSel(){const el=els.find(x=>x.id===sel);if(powered){say('Вимкніть автомат, щоб видаляти елементи.');return}
+if(el&&!el.fixed){els=els.filter(x=>x!==el);wires=wires.filter(w=>!w.a.startsWith(el.id+'.')&&!w.b.startsWith(el.id+'.'));sel=null;render()}}
+function P(e){const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;return p.matrixTransform(svg.getScreenCTM().inverse())}
+svg.addEventListener('pointerdown',e=>{const bk=e.target.closest('[data-brk]');if(bk){const b=els.find(x=>x.id===bk.dataset.brk);b.on=!b.on;b.tripped=false;sel=b.id;render();return}const t=e.target.closest('[data-t]'),w=e.target.closest('[data-w]'),g=e.target.closest('[data-e]'),p=P(e);
+if(powered){if(g){const el=els.find(x=>x.id===g.dataset.e);if(el&&el.type==='switch'){if(el.kind==='double'&&p.x-el.x>W(el)/2)el.on2=!el.on2;else el.on=!el.on;render()}}return}
+if(t){const a=allT().find(x=>x.id===t.dataset.t);drag={k:'w',a};tmp={x1:a.x,y1:a.y,x2:p.x,y2:p.y};e.preventDefault()}
+else if(w){if(!wires[+w.dataset.w].fixed)wires.splice(+w.dataset.w,1);render()}
+else if(g){const el=els.find(x=>x.id===g.dataset.e),now=Date.now();if(el.type==='panel'){sel=null;render();return}if(last.id===el.id&&now-last.t<450&&!el.fixed){sel=el.id;delSel();last={id:null,t:0};return}last={id:el.id,t:now};sel=el.id;drag={k:'e',el,dx:p.x-el.x,dy:p.y-el.y};e.preventDefault();render()}else{sel=null;render()}});
+window.addEventListener('pointermove',e=>{if(!drag)return;const p=P(e);
+if(drag.k==='w'){tmp.x2=p.x;tmp.y2=p.y}else{const el=drag.el;el.x=Math.max(0,Math.min(900-W(el),p.x-drag.dx));el.y=Math.max(0,Math.min(520-H(el),p.y-drag.dy))}render()});
+window.addEventListener('pointerup',e=>{if(!drag)return;if(drag.k==='w'){const t=document.elementFromPoint(e.clientX,e.clientY),te=t&&t.closest&&t.closest('[data-t]');
+if(te){const b=allT().find(x=>x.id===te.dataset.t),a=drag.a;
+if(b.id===a.id||b.e.id===a.e.id)say('<span class="bad">Дріт не можна замикати на той самий пристрій.</span>');
+else if(wc(a.id)||wc(b.id))say('<span class="bad">В одну клему можна вставити лише один дріт. Розгалужуйте через Ваго.</span>');
+else wires.push({a:a.id,b:b.id,c:color,s:section})}}
+drag=null;tmp=null;render()});
+document.addEventListener('keydown',e=>{if((e.key==='Delete'||e.key==='Backspace')&&sel&&!/SELECT|INPUT/.test(e.target.tagName))delSel()});
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{if(powered){say('Зніміть напругу, щоб додавати елементи.');return}const v=b.dataset.add,o=(++cnt%6)*24;
+if(/^\d$/.test(v))els.push(mk('wago',330+o,230+o,null,+v));else if(v==='breaker')addBreaker();else if(v==='box')els.unshift(mk('box',280+o,200+o));else els.push(mk(v,300+o,60+o));render()});
+$('del').onclick=delSel;$('clr').onclick=()=>{if(!powered){wires=wires.filter(w=>w.fixed);render()}};$('amp').onchange=function(){const el=els.find(x=>x.id===sel);if(!el||el.type!=='breaker')return;if(powered){say('Вимкніть автомат, щоб змінити номінал.');syncSel();return}el.amp=+this.value;render()};
+$('kind').onchange=function(){const el=els.find(x=>x.id===sel);if(!el||el.type!=='switch')return;if(powered){say('Вимкніть автомат, щоб змінити тип вимикача.');syncSel();return}el.kind=this.value;el.on=false;el.on2=false;const ids=new Set(allT().map(t=>t.id)),n0=wires.length;wires=wires.filter(w=>ids.has(w.a)&&ids.has(w.b));say(wires.length<n0?'Тип змінено. Дроти до клем, яких більше немає, видалено.':'Тип вимикача змінено.');render()};$('sec').onchange=function(){section=+this.value};$('chk').onclick=check;$('pwr').onclick=setPower;
+function renderCols(){$('cols').innerHTML=Object.entries(COL).map(([k,v])=>`<button class="sw ${k===color?'sel':''}" data-c="${k}" title="${v[1]}" aria-label="${v[1]}" style="background:${k==='yg'?'linear-gradient(135deg,#d9c200 50%,#2e9d3f 50%)':v[0]}"></button>`).join('');
+$('cname').textContent=COL[color][1];document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{color=b.dataset.c;renderCols()})}
+function renderLvls(){$('lvls').innerHTML=LV.map((l,i)=>`<button data-l="${i}" class="${i===lvl?'on':''} ${done[i]?'done':''}">${l.n}</button>`).join('');
+document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>load(+b.dataset.l))}
+function load(i){lvl=i;powered=false;sel=null;syncBtn();els=LV[i].els();wires=els.filter(e=>e.type==='breaker').map(b=>({a:'p.L'+Math.round((b.x-els[0].x-20)/50),b:b.id+'.in',c:'brown',s:10,fixed:true}));
+$('ttl').textContent=LV[i].n;$('task').textContent=LV[i].t;$('hint').textContent=LV[i].h;
+say('Протягніть дріт від клеми до клеми. Клацніть по дроту, щоб його видалити. Видалити елемент: виберіть його й натисніть «Видалити вибране». Автомат вмикається клацанням по важелю.');renderLvls();render()}
+renderCols();
+const AUTH=new URLSearchParams(location.search).has('author');
+fetch('levels.json').then(r=>r.json()).then(j=>{LV=j.map(l=>({...l,n:l.id+'. '+l.n,els:()=>l.els.map(e=>{const x=mk(e.type,e.x,e.y,e.type==='panel'?'p':undefined,e.n);if(e.kind)x.kind=e.kind;if(e.amp)x.amp=e.amp;return x})}));
+let i=LV.findIndex(l=>l.id===location.hash.slice(1));load(i<0?0:i)}).catch(()=>say('Не вдалося завантажити рівні (levels.json).'));
+if(AUTH){$('auth').hidden=false;$('anew').onclick=()=>{const n=LV.length+1;LV.push({id:String(n),n:n+'. Новий рівень',t:'',h:'',els:()=>[mk('panel',30,140,'p'),mk('breaker',50,200)]});load(LV.length-1);authFill()};
+$('agen').onclick=()=>{const o={id:$('aid').value,n:$('an').value,t:$('at').value,h:$('ah').value};if($('asw').checked)o.sw=1;
+o.els=els.map(e=>{const r={type:e.type,x:Math.round(e.x),y:Math.round(e.y)};if(e.kind&&e.kind!=='single')r.kind=e.kind;if(e.type==='breaker')r.amp=e.amp;if(e.type==='wago')r.n=e.n;return r});
+const t=JSON.stringify(o,null,1);$('aout').value=t;try{navigator.clipboard.writeText(t)}catch(_){}};
+window.authFill=()=>{const l=LV[lvl];$('aid').value=l.id;$('an').value=l.n.replace(/^\d+\.\s*/,'');$('at').value=l.t;$('ah').value=l.h;$('asw').checked=!!l.sw};
+document.addEventListener('click',()=>{},{once:true});$('lvls').addEventListener('click',()=>setTimeout(authFill,50))}
+</script></body></html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html><html lang="uk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Урок | Курс домашньої електрики</title><style>:root{padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0);--bg:#f3f1ec;--fg:#1d2227;--mut:#5d666e;--card:#fff;--line:#d5d2ca;--acc:#c8501e;--ok:#1f7a45}@media(prefers-color-scheme:dark){:root{--bg:#1b1f23;--fg:#ecebe6;--mut:#a3abb2;--card:#262b30;--line:#3a4148;--acc:#f08a5d;--ok:#59c98a}}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 "Segoe UI",system-ui,sans-serif}main{max-width:820px;margin:0 auto;padding:18px}a{color:var(--acc)}h1{font-size:26px;margin:.3em 0}h2{font-size:20px;margin:1.4em 0 .3em}.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin:10px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.mut{color:var(--mut)}.btn{display:inline-block;background:var(--acc);color:#fff;text-decoration:none;border-radius:8px;padding:8px 14px;border:0;font:inherit;cursor:pointer}button.o{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px 12px;margin:3px;font:inherit;cursor:pointer}button.good{border-color:var(--ok);color:var(--ok)}button.bad{border-color:#b3261e;color:#b3261e}.warn{border-left:4px solid var(--acc)}.done{color:var(--ok)}</style></head><body><main>
+<p><a href="index.html">← До курсу</a></p><div id="c">Завантаження…</div>
+<script>
+const id=new URLSearchParams(location.search).get('id')||'';let ok=0,total=0;
+const inl=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\[(!?)([^\]]+)\]\(([^)]+)\)/g,(m,b,t,u)=>`<a ${b?'class="btn"':''} href="${u}">${t}</a>`);
+function md(src){let o='',ul=0;const cl=()=>{if(ul){o+='</ul>';ul=0}};
+src.split('\n').forEach(l=>{l=l.trimEnd();
+if(/^# /.test(l)){cl();o+=`<h1>${inl(l.slice(2))}</h1>`;document.title=l.slice(2)}
+else if(/^## /.test(l)){cl();o+=`<h2>${inl(l.slice(3))}</h2>`}
+else if(/^- /.test(l)){if(!ul){o+='<ul>';ul=1}o+=`<li>${inl(l.slice(2))}</li>`}
+else if(/^> /.test(l)){cl();o+=`<div class="card warn">${inl(l.slice(2))}</div>`}
+else if(/^\? /.test(l)){cl();const p=l.slice(2).split('|').map(x=>x.trim());total++;o+=`<div class="card"><b>${inl(p[0])}</b><br>${p.slice(1).map(a=>`<button class="o" data-r="${a.endsWith('*')?1:0}">${inl(a.replace(/\*$/,''))}</button>`).join('')}</div>`}
+else if(l.trim()){cl();o+=`<p>${inl(l)}</p>`}else cl()});cl();return o}
+if(!/^[\w-]+$/.test(id))c.textContent='Урок не знайдено.';else fetch('lessons/'+id+'.md').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{c.innerHTML=md(t)+'<p id="r"></p>'}).catch(()=>c.textContent='Урок не знайдено.');
+c.onclick=e=>{const b=e.target.closest('button[data-r]');if(!b||b.dataset.done)return;if(b.dataset.r==='1'){b.className='o good';b.dataset.done=1;ok++;
+if(ok===total){r.textContent='Урок пройдено. Переходь до практики.';r.className='done';try{const d=JSON.parse(localStorage.getItem('ec_lessons')||'{}');d[id]=1;localStorage.setItem('ec_lessons',JSON.stringify(d))}catch(_){}}}else b.className='o bad'};
+</script></main></body></html>
